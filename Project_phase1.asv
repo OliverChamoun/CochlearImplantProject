@@ -5,7 +5,7 @@ clc;
 audioFolder = pwd; % Current directory, assuming it contains files and code
 
 % Create a new folder for processed files if it doesn’t exist
-processedFolder = fullfile(audioFolder, 'Processed_Files');
+processedFolder = fullfile(audioFolder, 'Processed_Files_Phase1');
 if ~exist(processedFolder, 'dir')
     mkdir(processedFolder);
 end
@@ -24,7 +24,7 @@ for k = 1:length(audioFiles)
         fprintf('Processing %s...\n', fileName);
         
         % Call your function to process this file and save in the new folder
-        processSoundFile(filePath, processedFolder);
+        processPhase1(filePath, processedFolder);
         
         % Pause to wait for playback duration before processing the next file
         [inputSignal, fs] = audioread(filePath);

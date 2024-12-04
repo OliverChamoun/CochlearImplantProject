@@ -1,4 +1,4 @@
-function processSoundFile(filePath, processedFolder)
+function processPhase1(filePath, processedFolder)
     % Function to process sound files according to the steps in Task 3
 
     % 3.1 Read sound file and get sampling rate
