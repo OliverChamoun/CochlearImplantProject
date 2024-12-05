@@ -1,3 +1,7 @@
+% This code has linear spacing instead of logarithmic spacing, works with
+% lower number of channels, but logarithmic with butterworth is better for
+% that
+
 function processPhase3_lin(filePath, processedFolder, N)
     % Function to process sound files for Phase 3 of the cochlear implant project
     % Input: filePath - path to the sound file
@@ -25,25 +29,21 @@ function processPhase3_lin(filePath, processedFolder, N)
         fs = 16000; % Update the sampling rate
     end
 
-    % Define bandpass filter parameters using logarithmic spacing
+    % Define bandpass filter parameters
     f_min = 100; % Minimum frequency
     f_max = min(8000, fs / 2 - 200); % Ensure f_max is below Nyquist frequency
-    centerFrequencies = logspace(log10(f_min), log10(f_max), N); % Logarithmic spacing of center frequencies
+    bandwidth = (f_max - f_min) / N; % Calculate bandwidth for each filter
 
     % Design bandpass filters
     bandpassFilters = cell(N, 1);
+    centerFrequencies = zeros(N, 1);
     for i = 1:N
-        if i == 1
-            f_low = f_min;
-        else
-            f_low = sqrt(centerFrequencies(i-1) * centerFrequencies(i)); % Geometric mean for smoother transition
+        f_low = round(f_min + (i - 1) * bandwidth);
+        f_high = round(f_low + bandwidth);
+        if f_high >= fs / 2
+            f_high = round(fs / 2 - 1); % Set f_high to be below Nyquist frequency
         end
-        if i == N
-            f_high = f_max;
-        else
-            f_high = sqrt(centerFrequencies(i) * centerFrequencies(i+1)); % Geometric mean for smoother transition
-        end
-        
+        centerFrequencies(i) = (f_low + f_high) / 2; % Calculate center frequency for cosine generation
         [b, a] = butter(4, [f_low, f_high] / (fs / 2), 'bandpass');
         bandpassFilters{i} = {b, a};
     end
@@ -159,8 +159,7 @@ function processPhase3_lin(filePath, processedFolder, N)
         [correlation, lag] = xcorr(referenceSignal, outputSignal);
         [maxCorr, idx] = max(abs(correlation));
         timeLag = lag(idx) / fs; % Time lag in seconds
-        fprintf('Cross-Correlation: Maximum Correlation = %.2f, Time Lag = %.4f seconds
-', maxCorr, timeLag);
+        fprintf('Cross-Correlation: Maximum Correlation = %.2f, Time Lag = %.4f seconds\n', maxCorr, timeLag);
     catch ME
         fprintf('Error calculating Cross-Correlation for %s: %s ', fileName, ME.message);
     end

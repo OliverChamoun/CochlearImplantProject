@@ -1,7 +1,6 @@
-%  This code works for higher number of channels (try with 100 and see how that
-% works)
+% This codes works best with lower number of channels (eg.8)
 
-function processPhase3(filePath, processedFolder, N)
+function Lower_freq(filePath, processedFolder, N)
     % Function to process sound files for Phase 3 of the cochlear implant project
     % Input: filePath - path to the sound file
     %        processedFolder - folder to save processed files
@@ -31,26 +30,12 @@ function processPhase3(filePath, processedFolder, N)
         fs = 16000; % Update the sampling rate
     end
 
-    % Define bandpass filter parameters based on number of channels
+    % Define bandpass filter parameters using logarithmic spacing
     f_min = 100; % Minimum frequency
     f_max = min(8000, fs / 2 - 200); % Ensure f_max is below Nyquist frequency
+    centerFrequencies = logspace(log10(f_min), log10(f_max), N); % Logarithmic spacing of center frequencies
 
-    if N <= 30
-        % Use linear spacing for fewer channels
-        centerFrequencies = linspace(f_min, f_max, N);
-    else
-        % Use hybrid spacing (linear + logarithmic) for more channels
-        N_linear = round(N * 0.6);
-        N_log = N - N_linear;
-
-        linspace_frequencies = linspace(f_min, f_max / 3, N_linear);
-        logspace_frequencies = logspace(log10(f_max / 3), log10(f_max), N_log);
-
-        % Concatenate both frequency ranges
-        centerFrequencies = [linspace_frequencies, logspace_frequencies];
-    end
-
-    % Design bandpass filters with a lower order for stability
+    % Design bandpass filters
     bandpassFilters = cell(N, 1);
     for i = 1:N
         if i == 1
@@ -72,7 +57,7 @@ function processPhase3(filePath, processedFolder, N)
             f_high = fs / 2 - 1;
         end
 
-        [b, a] = butter(2, [f_low, f_high] / (fs / 2), 'bandpass');
+        [b, a] = butter(4, [f_low, f_high] / (fs / 2), 'bandpass');
         bandpassFilters{i} = {b, a};
     end
 
@@ -108,7 +93,7 @@ function processPhase3(filePath, processedFolder, N)
     % Implement manual envelope extraction using a simple FIR lowpass filter
     % Design a lowpass filter manually (e.g., a moving average filter)
     cutoff_freq = 400; % 400 Hz cutoff frequency
-    windowSize = round(fs / (cutoff_freq * 0.5)); % Increase window size for smoother envelopes
+    windowSize = round(fs / cutoff_freq); % Window size based on cutoff frequency
     lowpassKernel = ones(1, windowSize) / windowSize; % Simple moving average filter
 
     envelopes = cell(N, 1);
